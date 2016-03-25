@@ -1,10 +1,3 @@
-# Todo
-
-* add a link to the elixir-lang slack group into the blog post right after the
-Repo error message
-* add photo of error message to img/ and fix the place where it says to put that picture
-* add photo of working Repo and fix the place where it says to put that picture.
-
 # When Phoenix is Overkill
 Elixir, Plug, and Ecto on Heroku
 
@@ -173,10 +166,11 @@ We’re almost there, but I ran into some problems when I tried to run `iex -S m
 ![Error starting server. gen_server no process](img/error.png "Error message")
 
 It turns out that Ecto expects your Repo to be supervised. I didn’t know that
-and it took a push from the fine people at elixir-lang to help me through it.
-Luckily, it’s an easy fix if you created your app with the --sup option and you
-know that's what you’re supposed to do. Go to `lib/utility.ex` and add your Repo to the
-children that your supervisor will supervise.
+and it took a push from the fine people at the
+[elixir-lang](https://elixir-slackin.herokuapp.com/) slack group to help me
+through it. Luckily, it’s an easy fix if you created your app with the --sup
+option and you know that's what you’re supposed to do. Go to `lib/utility.ex`
+and add your Repo to the children that your supervisor will supervise.
 
 ```
 children = [
