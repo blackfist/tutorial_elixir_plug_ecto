@@ -69,6 +69,8 @@ is actually running every day.
 
 # Adding the database
 
+## Get dependencies
+
 Let’s have the utility write to a database every time it runs. That way we can
 see when it last ran and how many results it found. Start by adding `ecto` and
 `postgrex` to our dependencies in `mix.exs`. Don’t forget to run `mix deps.get`
@@ -90,6 +92,8 @@ defp deps do
     ]
   end
 ```
+
+## Create Repo and Model
 
 Next we need a module for our Repo and a schema for our records. Create a file
 called `lib/repo.ex` and fill it in.
@@ -164,6 +168,8 @@ migration
 
 We’re almost there, but I ran into some problems when I tried to run `iex -S mix`:
 ![Error starting server. gen_server no process](img/error.png "Error message")
+
+## Supervise the database
 
 It turns out that Ecto expects your Repo to be supervised. I didn’t know that
 and it took a push from the fine people at the
@@ -314,12 +320,14 @@ accept connections.
 
 # Deploying to Heroku
 
+## Set listen port at runtime
+
 There are a few other tweaks we need to make to run this on Heroku. Right now
 our web service is always going to run on port 4000. Heroku wont let you just
 connect to whatever port you feel like, though, it will tell your app what port
 it can use. So let's configure our web server to get its port information from
 an environment variable. Do you remember what file we go to for configuration
-settings? `/config/config.exs`. Add this line to your configuration.
+settings? `config/config.exs`. Add this line to your configuration.
 
 `config :utility, web_port: String.to_integer(System.get_env("PORT") || "4000")`
 
@@ -331,3 +339,80 @@ that environment variable isn't present. So we use our double pipe to make sure
 that we either get a string from `System.get_env` or we get the string "4000" and then
 we wrap all of that in `String.to_integer` to make sure that our finished value is
 acceptable to Cowboy.
+
+We also have to configure `lib/status.ex` so that when it starts up it will use
+the value of `web_port`. Change the `start_link` function to look like this.
+
+```
+def start_link do
+  {:ok, _} = Plug.Adapters.Cowboy.http Status, [], port: Application.get_env(:factor_audit, :web_port)
+end
+```
+
+## Create the app
+
+If you already have the [Heroku Toolbelt](https://toolbelt.heroku.com/)
+installed, then you can use the command `heroku create` to create an
+application. If you haven't used this before, you may have to run `heroku login`
+firt. Just go to the root folder of your application and type `heroku create`
+and you'll get back a randomly-named application. Or you can visit
+[dashboard.heroku.com](https://dashboard.heroku.com/new) and create your app
+from the browser.
+
+## Provision the database
+
+Getting your database set up couldn't be easier. Run this command. `heroku
+addons:create heroku-postgresql:hobby-dev`
+
+## Get the buildpack
+
+Buildpacks tell Heroku how to compile and run your code. The de-facto standard
+is  the HashNuke buildpack for Elixir which you can find
+[here](https://github.com/HashNuke/heroku-buildpack-elixir).  To use it in your
+app, you just have to type this simple command. `heroku config:set
+BUILDPACK_URL="https://github.com/HashNuke/heroku-buildpack-elixir.git"`
+
+## Push the code
+
+Pushing is as easy as typing this from the command line.
+`git push heroku master`
+
+You can also link your app to GitHub in the Heroku dashboard and make it so that
+every time you push to GitHub your app gets updated.
+
+## Finish your setup
+If you try to visit your app right now you're going to have a problem because
+you haven't done the database migrations. I suggest you run `heroku run bash`
+to get a shell and then run these commands to migrate the database, and run your
+utility one time. That way there will be something in the database to return.
+```
+mix ecto.migrate
+iex -S mix
+Users.main
+```
+
+Now visit your app in a web page. If you forget the url for your app, just
+type `heroku info` and look at the output.
+
+# Troubleshooting
+
+## How do I view logs
+
+From your command line: `heroku logs`
+
+## Not binding to web port
+```
+2016-03-25T22:49:24.183174+00:00 heroku[router]: at=error code=H20 desc="App boot timeout" method=GET path="/" host=(name of your app) request_id=(random uuid) fwd="(ip address)" dyno= connect= service= status=503 bytes=
+2016-03-25T22:49:57.912701+00:00 heroku[web.1]: Error R10 (Boot timeout) -> Web process failed to bind to $PORT within 60 seconds of launch
+2016-03-25T22:49:57.912701+00:00 heroku[web.1]: Stopping process with SIGKILL
+2016-03-25T22:49:58.915960+00:00 heroku[web.1]: Process exited with status 137
+2016-03-25T22:49:58.938323+00:00 heroku[web.1]: State changed from starting to crashed
+```
+
+If you see this then your app is trying to bind to port 4000 rather than the
+value that Heroku is sending in the $PORT environment variable.
+
+## Invalid web port
+```
+{"Kernel pid terminated",application_controller,"{application_start_failure,utility,{{shutdown,{failed_to_start_child,'Elixir.Status',{'EXIT',{{badmatch,{error,{{shutdown,{failed_to_start_child,ranch_acceptors_sup,badarg}},{child,undefined,{ranch_listener_sup,'Elixir.Status.HTTP'},{ranch_listener_sup,start_link,['Elixir.Status.HTTP',100,ranch_tcp,[{port,nil}],cowboy_protocol,[{env,[{dispatch,[{'_',[],[{'_',[],'Elixir.Plug.Adapters.Cowboy.Handler',{'Elixir.Status',[]}}]}]}]}]]},permanent,infinity,supervisor,[ranch_listener_sup]}}}},[{'Elixir.Status',start_link,0,[{file,\"lib/status.ex\"},{line,15}]},{supervisor,do_start_child,2,[{file,\"supervisor.erl\"},{line,343}]},{supervisor,start_children,3,[{file,\"supervisor.erl\"},{line,326}]},{supervisor,init_children,2,[{file,\"supervisor.erl\"},{line,292}]},{gen_server,init_it,6,[{file,\"gen_server.erl\"},{line,328}]},{proc_lib,init_p_do_apply,3,[{file,\"proc_lib.erl\"},{line,240}]}]}}}},{'Elixir.Utility',start,[normal,[]]}}}"}
+```
