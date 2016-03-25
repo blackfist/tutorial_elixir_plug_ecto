@@ -416,3 +416,8 @@ value that Heroku is sending in the $PORT environment variable.
 ```
 {"Kernel pid terminated",application_controller,"{application_start_failure,utility,{{shutdown,{failed_to_start_child,'Elixir.Status',{'EXIT',{{badmatch,{error,{{shutdown,{failed_to_start_child,ranch_acceptors_sup,badarg}},{child,undefined,{ranch_listener_sup,'Elixir.Status.HTTP'},{ranch_listener_sup,start_link,['Elixir.Status.HTTP',100,ranch_tcp,[{port,nil}],cowboy_protocol,[{env,[{dispatch,[{'_',[],[{'_',[],'Elixir.Plug.Adapters.Cowboy.Handler',{'Elixir.Status',[]}}]}]}]}]]},permanent,infinity,supervisor,[ranch_listener_sup]}}}},[{'Elixir.Status',start_link,0,[{file,\"lib/status.ex\"},{line,15}]},{supervisor,do_start_child,2,[{file,\"supervisor.erl\"},{line,343}]},{supervisor,start_children,3,[{file,\"supervisor.erl\"},{line,326}]},{supervisor,init_children,2,[{file,\"supervisor.erl\"},{line,292}]},{gen_server,init_it,6,[{file,\"gen_server.erl\"},{line,328}]},{proc_lib,init_p_do_apply,3,[{file,\"proc_lib.erl\"},{line,240}]}]}}}},{'Elixir.Utility',start,[normal,[]]}}}"}
 ```
+
+If you have a mistake in `lib/status.ex` where you tell the app to get the `web_port`
+from Application.get_env or if there is a mistake in `config/config.exs` then the result
+that gets sent to your supervisor is `nil` instead of an integer. Make sure that the
+web port setting code in both of those files is right.
