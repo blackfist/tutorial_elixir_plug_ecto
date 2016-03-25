@@ -12,7 +12,7 @@ defmodule Status do
   end
 
   def start_link do
-    {:ok, _} = Plug.Adapters.Cowboy.http Status, []
+    {:ok, _} = Plug.Adapters.Cowboy.http Status, [], port: Application.get_env(:factor_audit, :web_port)
   end
 
 
