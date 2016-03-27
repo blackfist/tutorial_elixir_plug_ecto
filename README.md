@@ -1,5 +1,5 @@
 # When Phoenix is Overkill
-Elixir, Plug, and Ecto on Heroku
+Elixir, Plug, and Ecto on Heroku ([open an issue](https://github.com/blackfist/tutorial_elixir_plug_ecto/issues) to comment)
 
 Have you ever found yourself in a situation where you started developing a
 really simple utility but you kept adding functionality until it grew into
@@ -421,3 +421,6 @@ If you have a mistake in `lib/status.ex` where you tell the app to get the `web_
 from Application.get_env or if there is a mistake in `config/config.exs` then the result
 that gets sent to your supervisor is `nil` instead of an integer. Make sure that the
 web port setting code in both of those files is right.
+
+# Last notes
+Want to have a discussion about anything here? [Open an issue](https://github.com/blackfist/tutorial_elixir_plug_ecto/issues). Also, if you like this, [toss me a follow on twitter](https://twitter.com/bfist)
